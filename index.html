@@ -1,0 +1,1471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IBM PG3b Digital Land-and-Expand Prototype (V4)</title>
+  
+  <!-- IBM Plex Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Carbon Design Tokens & Custom CSS -->
+  <style>
+    :root {
+      --cds-interactive-01: #0f62fe;
+      --cds-interactive-02: #393939;
+      --cds-interactive-03: #0043ce;
+      --cds-interactive-04: #0f62fe;
+      --cds-ui-background: #ffffff;
+      --cds-ui-01: #f4f4f4;
+      --cds-ui-02: #ffffff;
+      --cds-ui-03: #e0e0e0;
+      --cds-ui-04: #8d8d8d;
+      --cds-ui-05: #161616;
+      --cds-text-01: #161616;
+      --cds-text-02: #525252;
+      --cds-text-03: #a8a8a8;
+      --cds-text-04: #ffffff;
+      --cds-support-01: #da1e28;
+      --cds-support-02: #24a148;
+      --cds-support-03: #f1c21b;
+      --cds-support-04: #0043ce;
+      --cds-purple-60: #8a3ffc;
+      --cds-teal-60: #007d79;
+      --cds-cyan-50: #1192e8;
+    }
+
+    body {
+      font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #f4f4f4;
+      color: #161616;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    code, pre, .font-mono {
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    /* Custom Carbon Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f4f4f4;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #8d8d8d;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #525252;
+    }
+  </style>
+
+  <!-- React 18 & Babel Standalone -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- Inline Babel Script -->
+  <script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+// --- CARBON DESIGN SYSTEM ICONS ---
+const Icons = {
+  Terraform: () => (
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M14.65 8.12l4.89-2.82v5.65l-4.89 2.82V8.12zm-5.3 3.06l4.89-2.82v5.65l-4.89 2.83v-5.66zm0-6.12L14.24 2.2v5.65L9.35 10.7V5.06zm-5.3 3.06l4.89-2.82v5.65L4.05 13.8V8.12z" fill="#7B42BC" />
+    </svg>
+  ),
+  Observe: () => (
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+      <circle cx="12" cy="12" r="10" fill="#000" />
+      <path d="M12 4a8 8 0 100 16 8 8 0 000-16zm-1 4h2v8h-2V8zm0-3h2v2h-2V5z" fill="#00A2C7" />
+    </svg>
+  ),
+  Optimize: () => (
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+      <circle cx="12" cy="12" r="10" fill="#0072c3" />
+      <path d="M12 6l4 8h-3v4h-2v-4H8l4-8z" fill="#fff" />
+    </svg>
+  ),
+  Protect: () => (
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm0 2.18l6 2.25v4.66c0 4.12-2.73 7.93-6 8.94-3.27-1.01-6-4.82-6-8.94V6.43l6-2.25z" fill="#8a3ffc" />
+      <path d="M11 7h2v6h-2zm0 8h2v2h-2z" fill="#8a3ffc" />
+    </svg>
+  ),
+  ConcertLogo: () => (
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+      <rect width="20" height="20" x="2" y="2" rx="3" fill="#0f62fe" />
+      <path d="M7 8h10v2H7V8zm0 4h10v2H7v-2zm0 4h7v2H7v-2z" fill="#fff" />
+    </svg>
+  ),
+  Checkmark: () => (
+    <svg className="w-4 h-4 text-[#24a148]" fill="currentColor" viewBox="0 0 20 20">
+      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+    </svg>
+  ),
+  Pending: () => (
+    <svg className="w-4 h-4 text-[#f1c21b]" fill="currentColor" viewBox="0 0 20 20">
+      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+    </svg>
+  ),
+  ChevronRight: () => (
+    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+    </svg>
+  ),
+  Close: () => (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  ),
+  Info: () => (
+    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  ),
+  Copy: () => (
+    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+    </svg>
+  ),
+  BobBot: () => (
+    <div className="w-6 h-6 rounded bg-[#161616] text-[#0f62fe] flex items-center justify-center font-bold text-xs border border-[#393939]">
+      <span className="text-white text-[11px]">B</span>
+    </div>
+  ),
+  SidekickIcon: () => (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+    </svg>
+  )
+};
+
+// --- PRESENTER BADGE COMPONENT ---
+const PresenterBadge = ({ type }) => {
+  if (type === 'EXISTING') {
+    return (
+      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-semibold rounded bg-[#defbe6] text-[#0e6027] border border-[#a7f0ba]">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#24a148]"></span>
+        Existing IBM functionality
+      </span>
+    );
+  }
+  if (type === 'PROPOSED') {
+    return (
+      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-semibold rounded bg-[#edf5ff] text-[#0043ce] border border-[#a6c8ff]">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#0f62fe]"></span>
+        Proposed UX
+      </span>
+    );
+  }
+  if (type === 'DEPENDENCY') {
+    return (
+      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-semibold rounded bg-[#fcf4d6] text-[#8a6100] border border-[#fddc69]">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#f1c21b]"></span>
+        Requires technical validation
+      </span>
+    );
+  }
+  return null;
+};
+
+// Access state tag
+const AccessStateBadge = ({ state }) => {
+  switch (state) {
+    case 'Already licensed':
+      return <span className="px-2 py-0.5 text-[11px] font-medium bg-[#defbe6] text-[#0e6027] border border-[#a7f0ba]">Already licensed</span>;
+    case 'Trial eligible':
+      return <span className="px-2 py-0.5 text-[11px] font-medium bg-[#edf5ff] text-[#0043ce] border border-[#a6c8ff]">Trial eligible</span>;
+    case 'Request evaluation':
+      return <span className="px-2 py-0.5 text-[11px] font-medium bg-[#fcf4d6] text-[#8a6100] border border-[#fddc69]">Request evaluation</span>;
+    default:
+      return null;
+  }
+};
+
+// --- DATA DEFINITIONS FOR CONCERT CAPABILITIES ---
+const ConcertCapabilities = {
+  observe: {
+    id: 'observe',
+    icon: Icons.Observe,
+    name: 'Concert Observe (Instana)',
+    shortName: 'Concert Observe',
+    tagline: 'Application performance monitoring, observability and tracing.',
+    accessState: 'Trial eligible',
+    description: 'Concert Observe connects telemetry into shared operational context, streaming 1-second metric resolution, distributed traces, and automated dependency topology to verify post-deployment health.',
+    checklist: [
+      { id: 'acc', label: 'Confirm Instana tenant access', status: 'Not started' },
+      { id: 'inst', label: 'Install supported monitoring agents / instrument workloads', status: 'Not started' },
+      { id: 'tel', label: 'Verify telemetry reception and application traces', status: 'Awaiting data' }
+    ]
+  },
+  optimize: {
+    id: 'optimize',
+    icon: Icons.Optimize,
+    name: 'Concert Optimize (Turbonomic)',
+    shortName: 'Concert Optimize',
+    tagline: 'Infrastructure and resource optimization.',
+    accessState: 'Request evaluation',
+    description: 'Concert Optimize continuously analyzes actual workload demand against provisioned cloud capacity, generating non-disruptive sizing and cost optimization recommendations for ECS and cloud VMs.',
+    checklist: [
+      { id: 'acc', label: 'Confirm Turbonomic account permissions', status: 'Not started' },
+      { id: 'disc', label: 'Configure supported workload and telemetry targets', status: 'Not started' },
+      { id: 'opt', label: 'Review optimization insights after data collection', status: 'Awaiting data' }
+    ]
+  },
+  protect: {
+    id: 'protect',
+    icon: Icons.Protect,
+    name: 'Concert Protect',
+    shortName: 'Concert Protect',
+    tagline: 'Application vulnerability and security risk management.',
+    accessState: 'Already licensed',
+    description: 'Concert Protect evaluates vulnerability exposures across container images and infrastructure configurations, prioritizing remediation based on operational criticality and real-world blast radius.',
+    checklist: [
+      { id: 'acc', label: 'Confirm Concert Platform account access', status: 'Not started' },
+      { id: 'reg', label: 'Connect a supported image or security data source', status: 'Not started' },
+      { id: 'cve', label: 'Review risk results after data ingestion', status: 'Awaiting data' }
+    ]
+  }
+};
+
+// --- SCENARIO DEFINITIONS ---
+const Scenarios = {
+  '1': {
+    id: '1',
+    title: 'Scenario 1: Terraform → Concert Observe',
+    capabilityKey: 'observe',
+    customerTask: 'How can I check whether this deployment affected application performance?',
+    triggerLocation: 'Run Completion Screen (#142 Applied)',
+    whyAppears: 'A successful Terraform apply provisioned cloud infrastructure. SREs naturally need to verify if live response times or error rates changed post-deployment.',
+    prerequisites: 'Terraform AWS provider state + Instana SaaS telemetry ingestion.',
+    classification: 'PROPOSED',
+    digitalActionLabel: 'Check application performance',
+    resourceTab: 'overview',
+    bobQuery: 'Did my latest deployment affect application performance?'
+  },
+  '2': {
+    id: '2',
+    title: 'Scenario 2: Terraform → Concert Optimize',
+    capabilityKey: 'optimize',
+    customerTask: 'Are we allocating more resources than these services actually need?',
+    triggerLocation: 'ECS Resource Detail View (aws_ecs_service.payments_backend)',
+    whyAppears: 'Terraform declares explicit CPU (4096) and RAM (8192) limits. DevOps leads need to verify if workloads are over-provisioned without risking SLOs.',
+    prerequisites: 'Terraform state parsing + Turbonomic ARM utilization metrics.',
+    classification: 'PROPOSED',
+    digitalActionLabel: 'Assess resource efficiency',
+    resourceTab: 'resources',
+    bobQuery: 'Are we overprovisioning our ECS services?'
+  },
+  '3': {
+    id: '3',
+    title: 'Scenario 3: Terraform → Concert Protect',
+    capabilityKey: 'protect',
+    customerTask: 'Does the container image we\'re deploying have any known vulnerabilities?',
+    triggerLocation: 'Resource Detail / Container Image Reference (ECR v2.4.1)',
+    whyAppears: 'Terraform references an Amazon ECR container image URI. Security and DevOps teams need to ensure no critical CVEs are deployed to production.',
+    prerequisites: 'ECR container image registry access + Concert Protect CVE correlation.',
+    classification: 'PROPOSED',
+    digitalActionLabel: 'Review image security',
+    resourceTab: 'resources',
+    bobQuery: 'Can you check whether the image used by payments-api has vulnerabilities?'
+  },
+  '4': {
+    id: '4',
+    title: 'Scenario 4: No Expansion Needed (Neutral Task)',
+    capabilityKey: null,
+    customerTask: 'What resources changed in my latest run?',
+    triggerLocation: 'Run Summary Screen',
+    whyAppears: 'The customer is performing standard Terraform inspection. No expansion recommendations are injected, demonstrating quiet, selective UX.',
+    prerequisites: 'Standard HCP Terraform workspace run logs.',
+    classification: 'EXISTING',
+    digitalActionLabel: null,
+    resourceTab: 'overview',
+    bobQuery: 'What resources changed in my latest deployment?'
+  }
+};
+
+// --- REUSABLE CONTEXTUAL RECOMMENDATION COMPONENT ---
+function ContextualRecommendationCard({ contextText, boundaryText, capability, onExplore, onDismiss }) {
+  if (!capability) return null;
+  return (
+    <div className="bg-white border border-[#e0e0e0] border-l-4 border-l-[#0f62fe] p-4 text-xs transition-all">
+      <div className="flex items-start justify-between gap-2">
+        <div className="space-y-1.5 flex-1">
+          <div className="flex items-center gap-1.5 text-[#525252] font-medium text-[11px]">
+            <Icons.Info />
+            <span>{contextText}</span>
+          </div>
+          <p className="text-[#161616] leading-relaxed">
+            {boundaryText}
+          </p>
+          <div className="pt-1 flex items-center gap-2">
+            <span className="font-semibold text-[#0043ce] flex items-center gap-1">
+              <capability.icon />
+              <span>{capability.name}</span>
+            </span>
+            <span className="text-[#525252] text-[11px]">— {capability.tagline}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-3 pt-2.5 border-t border-[#f4f4f4] flex items-center gap-3">
+        <button
+          onClick={onExplore}
+          className="px-3 py-1.5 bg-[#0f62fe] hover:bg-[#0353e9] text-white font-medium text-xs flex items-center gap-1 transition-colors"
+        >
+          <span>Explore setup</span>
+          <Icons.ChevronRight />
+        </button>
+        {onDismiss && (
+          <button
+            onClick={onDismiss}
+            className="text-xs text-[#525252] hover:text-[#161616] font-medium"
+          >
+            Dismiss
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// --- MAIN APPLICATION COMPONENT ---
+function App() {
+  // Global View Controls
+  const [presenterMode, setPresenterMode] = useState(false);
+  const [activeScenarioId, setActiveScenarioId] = useState('1');
+  const [activeChannel, setActiveChannel] = useState('ui'); // 'ui' | 'sidekick' | 'bob' | 'hub'
+  
+  // Terraform Workspace Tab State
+  const [activeTerraformTab, setActiveTerraformTab] = useState('overview'); // 'overview' | 'resources' | 'code' | 'hub'
+  const [selectedResource, setSelectedResource] = useState('aws_ecs_service.payments_backend');
+  
+  // Sidekick State (Default Collapsed)
+  const [sidekickOpen, setSidekickOpen] = useState(false);
+  
+  // Shared digital activation destination (full-page simulated browser handoff)
+  const [activationModalOpen, setActivationModalOpen] = useState(false);
+  const [activeCapabilityForModal, setActiveCapabilityForModal] = useState(ConcertCapabilities.observe);
+  const [modalPath, setModalPath] = useState('trial');
+  const [activationStage, setActivationStage] = useState('overview'); // overview | evaluation | submitted | setup | progress
+  const [activationOrigin, setActivationOrigin] = useState('terraform');
+  const [activationReason, setActivationReason] = useState('');
+  const [presenterAccessScenario, setPresenterAccessScenario] = useState('auto');
+  const [embeddedAgentConcept, setEmbeddedAgentConcept] = useState(false);
+  const [evaluationEmail, setEvaluationEmail] = useState('');
+  const [evaluationNextStep, setEvaluationNextStep] = useState('specialist');
+  const [evaluationMessage, setEvaluationMessage] = useState('');
+  const [evaluationConsent, setEvaluationConsent] = useState(false);
+  const [evaluationError, setEvaluationError] = useState('');
+  const [requestSubmitting, setRequestSubmitting] = useState(false);
+  const [activationConsent, setActivationConsent] = useState(false);
+  const [currentRequest, setCurrentRequest] = useState(null);
+
+  // Simulated Activation Status for Capabilities
+  const [capabilityStatuses, setCapabilityStatuses] = useState({
+    observe: { activated: false, status: 'Not connected' },
+    optimize: { activated: false, status: 'Not connected' },
+    protect: { activated: false, status: 'Not connected' }
+  });
+
+  // Bob Chat State
+  const [bobMessages, setBobMessages] = useState([
+    {
+      id: 1,
+      sender: 'bob',
+      time: '10:14 AM',
+      text: "Hello! I'm Bob, connected to your **acme-prod-payments-api** Terraform workspace. How can I assist with your deployment?"
+    }
+  ]);
+  const [bobInput, setBobInput] = useState('');
+  const [isBobTyping, setIsBobTyping] = useState(false);
+
+  // Current Scenario Helper
+  const currentScenario = Scenarios[activeScenarioId];
+  const currentCapability = currentScenario.capabilityKey ? ConcertCapabilities[currentScenario.capabilityKey] : null;
+
+  // Handle Scenario Switch from Presenter Bar
+  const handleSelectScenario = (scenId) => {
+    setActiveScenarioId(scenId);
+    const scen = Scenarios[scenId];
+    if (scen.resourceTab) {
+      setActiveTerraformTab(scen.resourceTab);
+    }
+    // Reset Bob Chat to scenario context
+    setBobMessages([
+      {
+        id: Date.now(),
+        sender: 'bob',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        text: `Connected to **acme-prod-payments-api** workspace. Ready to help with Run #142 (${scen.title}).`
+      }
+    ]);
+  };
+
+  // Entry points converge here: product UI, passive hub, Sidekick and Bob.
+  // This is a FULL-PAGE simulated IBM browser destination, not a custom Bob chat modal.
+  const openActivationModal = (capObj, origin = null, explicitQuestion = null) => {
+    setActiveCapabilityForModal(capObj);
+    const recommendedPath = capObj.accessState === 'Already licensed' ? 'licensed' : capObj.accessState === 'Trial eligible' ? 'trial' : 'evaluation';
+    setModalPath(presenterAccessScenario === 'auto' ? recommendedPath : presenterAccessScenario);
+    const resolvedOrigin = origin || (activeChannel === 'bob' ? 'bob' : activeChannel === 'hub' ? 'hub' : 'terraform');
+    setActivationOrigin(resolvedOrigin);
+    setActivationReason(explicitQuestion || (resolvedOrigin !== 'hub' && currentScenario.capabilityKey === capObj.id ? currentScenario.customerTask : 'Exploring IBM capabilities alongside HCP Terraform')); 
+    setActivationStage('overview');
+    setEvaluationEmail('');
+    setEvaluationMessage('');
+    setEvaluationNextStep('specialist');
+    setEvaluationConsent(false);
+    setEvaluationError('');
+    setActivationConsent(false);
+    setRequestSubmitting(false);
+    setCurrentRequest(null);
+    setActivationModalOpen(true);
+  };
+
+  const returnToOrigin = () => {
+    setActivationModalOpen(false);
+    // Parent React component is retained, so Bob chat and Terraform state remain intact.
+  };
+
+  const startSelectedPath = () => {
+    setEvaluationError('');
+    if (modalPath === 'evaluation') setActivationStage('evaluation');
+    else setActivationStage('setup');
+  };
+
+  const submitEvaluationRequest = (event) => {
+    event.preventDefault();
+    const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(evaluationEmail.trim());
+    if (!validEmail) { setEvaluationError('Enter a valid work email to continue.'); return; }
+    if (!evaluationConsent) { setEvaluationError('Please confirm the information-sharing consent.'); return; }
+    setEvaluationError('');
+    setRequestSubmitting(true);
+    // Client-only demo. No network requests, no actual sales ticket.
+    setTimeout(() => {
+      const request = {
+        reference: 'PG3-DEMO-1042',
+        product: activeCapabilityForModal.shortName,
+        reason: activationReason,
+        email: evaluationEmail.trim(),
+        nextStep: evaluationNextStep,
+        message: evaluationMessage.trim()
+      };
+      setCurrentRequest(request);
+      setCapabilityStatuses(prev => ({ ...prev, [activeCapabilityForModal.id]: { activated: false, status: 'Evaluation requested' } }));
+      setRequestSubmitting(false);
+      setActivationStage('submitted');
+    }, 550);
+  };
+
+  const completeDigitalSetup = () => {
+    const status = modalPath === 'trial' ? 'Trial requested — pending access' : 'Connection setup pending';
+    setCapabilityStatuses(prev => ({ ...prev, [activeCapabilityForModal.id]: { activated: false, status } }));
+    setActivationStage('progress');
+  };
+
+  // Bob Chat Handler with Explicit Tool Execution Simulation
+  const handleSendBobQuery = (queryText) => {
+    const textToSend = queryText || bobInput;
+    if (!textToSend.trim()) return;
+
+    const userMsg = {
+      id: Date.now(),
+      sender: 'user',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      text: textToSend
+    };
+
+    setBobMessages(prev => [...prev, userMsg]);
+    setBobInput('');
+    setIsBobTyping(true);
+
+    setTimeout(() => {
+      let reply = {};
+      const lower = textToSend.toLowerCase();
+
+      if (lower.includes('performance') || lower.includes('latency') || lower.includes('response time')) {
+        reply = {
+          id: Date.now() + 1,
+          sender: 'bob',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          toolUsed: 'terraform.get_run_status(run_id="run-142")',
+          toolOutput: 'status: "applied", resources: 24, target_group: "healthy"',
+          text: `The infrastructure changes for Run #142 were applied successfully across all 24 AWS resources.
+
+Terraform verifies that the ECS Fargate service and ALB targets were created with passing health probes. However, Terraform doesn't tell us whether application response times, latency, or error rates changed under traffic.
+
+**Concert Observe (Instana)** could provide that runtime performance visibility once telemetry is configured.`,
+          recommendation: ConcertCapabilities.observe
+        };
+      } else if (lower.includes('overprovision') || lower.includes('rightsiz') || lower.includes('too many resources') || lower.includes('resource sizing')) {
+        reply = {
+          id: Date.now() + 1,
+          sender: 'bob',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          toolUsed: 'terraform.get_resource_spec(id="aws_ecs_service.payments_backend")',
+          toolOutput: 'task_def: { cpu: "4096", memory: "8192", desired_count: 6 }',
+          text: `In your Terraform configuration, \`aws_ecs_service.payments_backend\` allocates **4 vCPU (4096 units)** and **8 GB RAM (8192 MB)** across 6 Fargate tasks.
+
+Terraform maintains these declared limits, but determining whether this represents over-provisioning requires historical utilization and performance telemetry.
+
+**Concert Optimize (Turbonomic)** evaluates live workload demand against provisioned allocations to recommend right-sizing.`,
+          recommendation: ConcertCapabilities.optimize
+        };
+      } else if (lower.includes('vulnerabilit') || lower.includes('cve') || lower.includes('image security') || lower.includes('container image')) {
+        reply = {
+          id: Date.now() + 1,
+          sender: 'bob',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          toolUsed: 'terraform.get_container_image(service="payments-api")',
+          toolOutput: 'image: "123456789.dkr.ecr.us-east-1.amazonaws.com/payments-api:v2.4.1"',
+          text: `Terraform is deploying container image \`payments-api:v2.4.1\` from Amazon ECR.
+
+Terraform manages the task definition and repository URI, but does not perform software composition analysis or image security scans.
+
+**Concert Protect** can correlate this container image with vulnerability databases and runtime exposures to evaluate security risk.`,
+          recommendation: ConcertCapabilities.protect
+        };
+      } else {
+        // Scenario 4: Neutral Task
+        reply = {
+          id: Date.now() + 1,
+          sender: 'bob',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          toolUsed: 'terraform.get_run_diff(run_id="run-142")',
+          toolOutput: 'added: 24, modified: 0, destroyed: 0',
+          text: `In Run #142 (commit \`7a2b91f\`), Terraform provisioned **24 new resources**:
+• 1x AWS ECS Fargate Service (\`payments-api\`, 6 tasks)
+• 1x AWS RDS Aurora PostgreSQL Cluster (Multi-AZ)
+• 1x AWS ElastiCache Redis Cluster (2 nodes)
+• 1x AWS Application Load Balancer with HTTPS listeners
+• 20x Supporting IAM roles, Security Groups, and Subnet associations.
+
+All resources are in the \`applied\` state with zero pending changes.`,
+          recommendation: null
+        };
+      }
+
+      setIsBobTyping(false);
+      if (reply.recommendation) reply.customerQuestion = textToSend;
+      setBobMessages(prev => [...prev, reply]);
+    }, 900);
+  };
+
+  return (
+    <div className="min-h-screen bg-[#f4f4f4] text-[#161616] flex flex-col font-sans">
+      
+      {/* ========================================================= */}
+      {/* 1. DARK CARBON HEADER                                     */}
+      {/* ========================================================= */}
+      <header className="bg-[#161616] text-white border-b border-[#393939] h-12 flex items-center justify-between px-4 z-30 sticky top-0">
+        <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-sm tracking-wider uppercase text-[#0f62fe]">IBM</span>
+            <span className="text-sm font-light text-[#8d8d8d]">|</span>
+            <div className="flex items-center gap-1.5 text-xs font-medium">
+              <Icons.Terraform />
+              <span>HCP Terraform</span>
+            </div>
+          </div>
+
+          <div className="hidden md:flex items-center text-xs text-[#8d8d8d] space-x-2 pl-3 border-l border-[#393939]">
+            <span>acme-corp-fintech</span>
+            <span>/</span>
+            <span className="text-white font-medium">acme-prod-payments-api</span>
+          </div>
+        </div>
+
+        {/* Global Controls */}
+        <div className="flex items-center space-x-3 text-xs">
+          {/* Channel Navigation Switcher (for rapid evaluation) */}
+          <div className="hidden sm:flex items-center bg-[#262626] p-0.5 rounded border border-[#393939]">
+            <button
+              onClick={() => { setActiveChannel('ui'); setActiveTerraformTab('overview'); }}
+              className={`px-2.5 py-1 rounded transition-colors ${
+                activeChannel === 'ui' ? 'bg-[#0f62fe] text-white font-medium' : 'text-[#c6c6c6] hover:text-white'
+              }`}
+            >
+              Terraform UI
+            </button>
+            <button
+              onClick={() => { setActiveChannel('bob'); }}
+              className={`px-2.5 py-1 rounded flex items-center gap-1 transition-colors ${
+                activeChannel === 'bob' ? 'bg-[#0f62fe] text-white font-medium' : 'text-[#c6c6c6] hover:text-white'
+              }`}
+            >
+              <Icons.BobBot />
+              <span>Bob Assistant</span>
+            </button>
+            <button
+              onClick={() => { setActiveChannel('hub'); setActiveTerraformTab('hub'); }}
+              className={`px-2.5 py-1 rounded transition-colors ${
+                activeChannel === 'hub' ? 'bg-[#0f62fe] text-white font-medium' : 'text-[#c6c6c6] hover:text-white'
+              }`}
+            >
+              Capabilities Hub
+            </button>
+          </div>
+
+          {/* PRESENTER MODE TOGGLE BUTTON */}
+          <button
+            onClick={() => setPresenterMode(!presenterMode)}
+            className={`px-2.5 py-1 rounded flex items-center gap-1.5 transition-colors border ${
+              presenterMode 
+                ? 'bg-[#002d9c] text-white border-[#4589ff] font-medium' 
+                : 'bg-[#262626] text-[#c6c6c6] border-[#525252] hover:bg-[#393939] hover:text-white'
+            }`}
+            title="Toggle Presenter Mode (Scenario controls & architecture findings)"
+          >
+            <Icons.Info />
+            <span>Presenter Mode: {presenterMode ? 'ON' : 'OFF'}</span>
+          </button>
+        </div>
+      </header>
+
+      {/* ========================================================= */}
+      {/* 2. PRESENTER MODE CONTROL BAR (SEPARATE FROM CUSTOMER UI) */}
+      {/* ========================================================= */}
+      {presenterMode && (
+        <div className="bg-[#121619] text-white border-b border-[#393939] px-4 py-2.5 text-xs z-20 space-y-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-[#a6c8ff] uppercase tracking-wide text-[10px]">Demo Scenario:</span>
+              <div className="flex items-center bg-[#262626] p-0.5 rounded border border-[#525252]">
+                <button
+                  onClick={() => handleSelectScenario('1')}
+                  className={`px-2 py-0.5 rounded text-[11px] ${
+                    activeScenarioId === '1' ? 'bg-[#0f62fe] text-white font-semibold' : 'text-[#c6c6c6] hover:text-white'
+                  }`}
+                >
+                  1. Observe (APM)
+                </button>
+                <button
+                  onClick={() => handleSelectScenario('2')}
+                  className={`px-2 py-0.5 rounded text-[11px] ${
+                    activeScenarioId === '2' ? 'bg-[#0f62fe] text-white font-semibold' : 'text-[#c6c6c6] hover:text-white'
+                  }`}
+                >
+                  2. Optimize (Sizing)
+                </button>
+                <button
+                  onClick={() => handleSelectScenario('3')}
+                  className={`px-2 py-0.5 rounded text-[11px] ${
+                    activeScenarioId === '3' ? 'bg-[#0f62fe] text-white font-semibold' : 'text-[#c6c6c6] hover:text-white'
+                  }`}
+                >
+                  3. Protect (Security)
+                </button>
+                <button
+                  onClick={() => handleSelectScenario('4')}
+                  className={`px-2 py-0.5 rounded text-[11px] ${
+                    activeScenarioId === '4' ? 'bg-[#0f62fe] text-white font-semibold' : 'text-[#c6c6c6] hover:text-white'
+                  }`}
+                >
+                  4. Neutral (No Expansion)
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-[#8d8d8d]">Classification:</span>
+              <PresenterBadge type={currentScenario.classification} />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2 items-center text-[11px] text-[#c6c6c6]">
+            <label htmlFor="presenter-access" className="font-medium">Simulated account condition:</label>
+            <select id="presenter-access" value={presenterAccessScenario} onChange={e => setPresenterAccessScenario(e.target.value)} className="bg-[#262626] text-white border border-[#525252] px-2 py-1">
+              <option value="auto">Sample product default</option>
+              <option value="licensed">Already licensed</option>
+              <option value="trial">Trial eligible</option>
+              <option value="evaluation">Sales-assisted</option>
+            </select>
+            <span className="text-[#8d8d8d]">Applied when opening an activation journey</span>
+          </div>
+          <div className="bg-[#1f2428] p-2 rounded border border-[#393939] flex flex-col md:flex-row md:items-center justify-between gap-2 text-[11px] text-[#c6c6c6]">
+            <div>
+              <strong className="text-white">Why recommendation appears:</strong> {currentScenario.whyAppears}
+            </div>
+            <div className="text-[#a8a8a8]">
+              <strong>Prerequisite:</strong> {currentScenario.prerequisites}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* 3. MAIN WORKSPACE / CHANNELS CONTAINER                    */}
+      {/* ========================================================= */}
+      <div className="flex-1 flex overflow-hidden">
+
+        {/* CHANNEL A & B: TERRAFORM WORKSPACE + SIDEKICK */}
+        {(activeChannel === 'ui' || activeChannel === 'hub') && (
+          <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+            
+            {/* Primary Workspace Main Content */}
+            <main className="flex-1 overflow-y-auto p-6 bg-[#f4f4f4]">
+              
+              {/* Workspace Header Card */}
+              <div className="bg-white border border-[#e0e0e0] p-5 mb-5 shadow-sm">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 text-xs text-[#525252] mb-1">
+                      <span>Workspaces</span>
+                      <span>/</span>
+                      <span className="text-[#161616] font-medium">acme-prod-payments-api</span>
+                    </div>
+                    <h1 className="text-xl font-semibold text-[#161616] flex items-center gap-3">
+                      <span>acme-prod-payments-api</span>
+                      <span className="text-xs px-2.5 py-1 bg-[#defbe6] text-[#0e6027] font-semibold border border-[#a7f0ba] flex items-center gap-1">
+                        <Icons.Checkmark />
+                        Applied (Run #142)
+                      </span>
+                    </h1>
+                    <p className="text-xs text-[#525252] mt-1">
+                      Target: AWS us-east-1 • Terraform v1.8.2 • VCS Branch: <code className="bg-[#f4f4f4] px-1 py-0.5 font-mono text-[11px]">main (commit 7a2b91f)</code>
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button className="px-3 py-1.5 text-xs bg-[#f4f4f4] hover:bg-[#e0e0e0] text-[#161616] border border-[#8d8d8d] font-medium">
+                      Lock Workspace
+                    </button>
+                    <button className="px-3 py-1.5 text-xs bg-[#0f62fe] hover:bg-[#0353e9] text-white font-medium">
+                      + New Run
+                    </button>
+                  </div>
+                </div>
+
+                {/* Workspace Navigation Tabs */}
+                <div className="flex border-b border-[#e0e0e0] mt-6 -mb-5 space-x-6 text-sm">
+                  <button
+                    onClick={() => { setActiveTerraformTab('overview'); setActiveChannel('ui'); }}
+                    className={`pb-3 font-medium transition-colors border-b-2 ${
+                      activeTerraformTab === 'overview' ? 'border-[#0f62fe] text-[#0f62fe]' : 'border-transparent text-[#525252] hover:text-[#161616]'
+                    }`}
+                  >
+                    Run Overview (#142)
+                  </button>
+                  <button
+                    onClick={() => { setActiveTerraformTab('resources'); setActiveChannel('ui'); }}
+                    className={`pb-3 font-medium transition-colors border-b-2 ${
+                      activeTerraformTab === 'resources' ? 'border-[#0f62fe] text-[#0f62fe]' : 'border-transparent text-[#525252] hover:text-[#161616]'
+                    }`}
+                  >
+                    Resources (24)
+                  </button>
+                  <button
+                    onClick={() => { setActiveTerraformTab('code'); setActiveChannel('ui'); }}
+                    className={`pb-3 font-medium transition-colors border-b-2 ${
+                      activeTerraformTab === 'code' ? 'border-[#0f62fe] text-[#0f62fe]' : 'border-transparent text-[#525252] hover:text-[#161616]'
+                    }`}
+                  >
+                    Configuration (main.tf)
+                  </button>
+                  <button
+                    onClick={() => { setActiveTerraformTab('hub'); setActiveChannel('hub'); }}
+                    className={`pb-3 font-medium transition-colors border-b-2 flex items-center gap-1.5 ${
+                      activeTerraformTab === 'hub' ? 'border-[#0f62fe] text-[#0f62fe]' : 'border-transparent text-[#525252] hover:text-[#161616]'
+                    }`}
+                  >
+                    <Icons.ConcertLogo />
+                    <span>Explore IBM capabilities</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* TAB 1: RUN OVERVIEW (#142 APPLIED) */}
+              {activeTerraformTab === 'overview' && (
+                <div className="space-y-4">
+                  {/* Normal Run Details */}
+                  <div className="bg-white border border-[#e0e0e0] p-5 shadow-sm">
+                    <div className="flex items-center justify-between border-b border-[#e0e0e0] pb-3 mb-4">
+                      <div>
+                        <h2 className="text-base font-semibold">Run Details: #142 (Applied)</h2>
+                        <span className="text-xs text-[#525252]">Triggered via GitHub Webhook on commit <code className="font-mono text-xs">feat: add redis cache & aurora replica</code></span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs text-[#525252]">Completed in 4m 12s</span>
+                        <div className="text-xs font-mono text-[#0e6027] font-semibold mt-0.5">+24 added / ~0 changed / -0 destroyed</div>
+                      </div>
+                    </div>
+
+                    {/* Resources Summary Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-4">
+                      <div className="bg-[#f4f4f4] p-3 border border-[#e0e0e0]">
+                        <span className="text-xs text-[#525252] block">Compute (ECS Fargate)</span>
+                        <span className="text-sm font-semibold text-[#161616]">6 Tasks Active</span>
+                        <span className="text-[11px] text-[#24a148] block mt-0.5">✔ Target Group Health Passing</span>
+                      </div>
+                      <div className="bg-[#f4f4f4] p-3 border border-[#e0e0e0]">
+                        <span className="text-xs text-[#525252] block">Database (RDS Aurora)</span>
+                        <span className="text-sm font-semibold text-[#161616]">PostgreSQL 15.4</span>
+                        <span className="text-[11px] text-[#24a148] block mt-0.5">✔ Multi-AZ Cluster Ready</span>
+                      </div>
+                      <div className="bg-[#f4f4f4] p-3 border border-[#e0e0e0]">
+                        <span className="text-xs text-[#525252] block">Cache (ElastiCache)</span>
+                        <span className="text-sm font-semibold text-[#161616]">Redis 7.0 Cluster</span>
+                        <span className="text-[11px] text-[#24a148] block mt-0.5">✔ 2 Nodes Available</span>
+                      </div>
+                      <div className="bg-[#f4f4f4] p-3 border border-[#e0e0e0]">
+                        <span className="text-xs text-[#525252] block">Ingress (AWS ALB)</span>
+                        <span className="text-sm font-semibold text-[#161616]">payments-api-alb</span>
+                        <span className="text-[11px] text-[#24a148] block mt-0.5">✔ Target 8080 Active</span>
+                      </div>
+                    </div>
+
+                    {/* Terraform Log Stream */}
+                    <div className="bg-[#161616] text-[#f4f4f4] p-3 font-mono text-xs overflow-x-auto border border-[#393939]">
+                      <div className="text-[#8d8d8d] mb-1"># Terraform Apply Output Log</div>
+                      <div className="text-[#24a148]">aws_alb.payments_api: Creation complete after 2m14s [id=arn:aws:elasticloadbalancing:us-east-1:...]</div>
+                      <div className="text-[#24a148]">aws_ecs_service.payments_backend: Creation complete after 1m45s [id=arn:aws:ecs:us-east-1:...]</div>
+                      <div className="text-[#24a148]">aws_rds_cluster_instance.aurora_primary: Creation complete after 3m50s</div>
+                      <div className="text-[#f1c21b] mt-1">Apply complete! Resources: 24 added, 0 changed, 0 destroyed.</div>
+                    </div>
+                  </div>
+
+                  {/* SCENARIO 1 DIGITAL-FIRST RECOMMENDATION (IF SCENARIO 1 ACTIVE) */}
+                  {activeScenarioId === '1' && (
+                    <ContextualRecommendationCard
+                      contextText="Deployment completed successfully."
+                      boundaryText="Terraform verified that cloud infrastructure assets were created with nominal AWS status. Verifying post-deployment application response times and error rates requires runtime telemetry."
+                      capability={ConcertCapabilities.observe}
+                      onExplore={() => openActivationModal(ConcertCapabilities.observe)}
+                    />
+                  )}
+                </div>
+              )}
+
+              {/* TAB 2: RESOURCES DETAIL TAB (SCENARIOS 2 & 3 CONTEXT) */}
+              {activeTerraformTab === 'resources' && (
+                <div className="space-y-4">
+                  {/* Resource Inventory Table */}
+                  <div className="bg-white border border-[#e0e0e0] p-5 shadow-sm">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <h2 className="text-sm font-semibold">Managed Resources (24)</h2>
+                        <span className="text-xs text-[#525252]">Select a resource to inspect configuration details</span>
+                      </div>
+                    </div>
+
+                    <div className="border border-[#e0e0e0] divide-y divide-[#e0e0e0] text-xs">
+                      {/* ECS Service Resource (Selected) */}
+                      <div 
+                        onClick={() => setSelectedResource('aws_ecs_service.payments_backend')}
+                        className={`p-3 cursor-pointer flex items-center justify-between ${
+                          selectedResource === 'aws_ecs_service.payments_backend' ? 'bg-[#edf5ff] border-l-4 border-l-[#0f62fe]' : 'hover:bg-[#f4f4f4]'
+                        }`}
+                      >
+                        <div>
+                          <div className="font-mono font-medium text-[#0f62fe]">aws_ecs_service.payments_backend</div>
+                          <span className="text-[#525252] text-[11px]">AWS ECS Fargate Service • 6 Tasks • CPU: 4096 • Memory: 8192 MB</span>
+                        </div>
+                        <span className="text-[#24a148] font-medium">● Active</span>
+                      </div>
+
+                      {/* Aurora DB */}
+                      <div 
+                        onClick={() => setSelectedResource('aws_rds_cluster.aurora_db')}
+                        className={`p-3 cursor-pointer flex items-center justify-between ${
+                          selectedResource === 'aws_rds_cluster.aurora_db' ? 'bg-[#edf5ff] border-l-4 border-l-[#0f62fe]' : 'hover:bg-[#f4f4f4]'
+                        }`}
+                      >
+                        <div>
+                          <div className="font-mono font-medium text-[#161616]">aws_rds_cluster.aurora_db</div>
+                          <span className="text-[#525252] text-[11px]">AWS Aurora PostgreSQL 15.4 • Multi-AZ</span>
+                        </div>
+                        <span className="text-[#24a148] font-medium">● Active</span>
+                      </div>
+
+                      {/* Redis */}
+                      <div 
+                        onClick={() => setSelectedResource('aws_elasticache_cluster.redis_cache')}
+                        className={`p-3 cursor-pointer flex items-center justify-between ${
+                          selectedResource === 'aws_elasticache_cluster.redis_cache' ? 'bg-[#edf5ff] border-l-4 border-l-[#0f62fe]' : 'hover:bg-[#f4f4f4]'
+                        }`}
+                      >
+                        <div>
+                          <div className="font-mono font-medium text-[#161616]">aws_elasticache_cluster.redis_cache</div>
+                          <span className="text-[#525252] text-[11px]">AWS ElastiCache Redis 7.0 • 2 Nodes</span>
+                        </div>
+                        <span className="text-[#24a148] font-medium">● Active</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Selected Resource Detail Inspector */}
+                  {selectedResource === 'aws_ecs_service.payments_backend' && (
+                    <div className="bg-white border border-[#e0e0e0] p-5 space-y-4 shadow-sm">
+                      <div className="flex items-center justify-between border-b border-[#e0e0e0] pb-2">
+                        <h3 className="text-sm font-semibold">Resource Detail: aws_ecs_service.payments_backend</h3>
+                        <span className="text-xs text-[#525252]">Provider: hashicorp/aws</span>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                        <div className="bg-[#f4f4f4] p-3 border border-[#e0e0e0] space-y-1.5">
+                          <span className="font-semibold text-[#525252] uppercase text-[10px] block">Declared Compute Allocation:</span>
+                          <div>CPU Units: <strong>4096 (4 vCPU)</strong></div>
+                          <div>Memory Limit: <strong>8192 MB (8 GB)</strong></div>
+                          <div>Desired Count: <strong>6 Tasks</strong></div>
+                        </div>
+
+                        <div className="bg-[#f4f4f4] p-3 border border-[#e0e0e0] space-y-1.5">
+                          <span className="font-semibold text-[#525252] uppercase text-[10px] block">Container Image Specification:</span>
+                          <div className="font-mono text-[11px] truncate">123456789.dkr.ecr.us-east-1.amazonaws.com/payments-api:v2.4.1</div>
+                          <div>Target Port: <strong>8080</strong> (Target Group Bound)</div>
+                          <div>Launch Type: <strong>FARGATE</strong></div>
+                        </div>
+                      </div>
+
+                      {/* SCENARIO 2 DIGITAL-FIRST RECOMMENDATION (OPTIMIZE) */}
+                      {activeScenarioId === '2' && (
+                        <ContextualRecommendationCard
+                          contextText="Declared resource allocation (4 vCPU / 8 GB RAM)."
+                          boundaryText="Terraform defines configured CPU and memory limits. Assessing whether these workloads are over-provisioned requires runtime utilization and demand signals."
+                          capability={ConcertCapabilities.optimize}
+                          onExplore={() => openActivationModal(ConcertCapabilities.optimize)}
+                        />
+                      )}
+
+                      {/* SCENARIO 3 DIGITAL-FIRST RECOMMENDATION (PROTECT) */}
+                      {activeScenarioId === '3' && (
+                        <ContextualRecommendationCard
+                          contextText="Container image deployed from Amazon ECR (v2.4.1)."
+                          boundaryText="Terraform manages container image deployment configuration. Assessing whether this container image contains known CVEs requires software inventory and vulnerability scanning."
+                          capability={ConcertCapabilities.protect}
+                          onExplore={() => openActivationModal(ConcertCapabilities.protect)}
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB 3: IAC CONFIGURATION */}
+              {activeTerraformTab === 'code' && (
+                <div className="bg-white border border-[#e0e0e0] p-5 shadow-sm">
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-sm font-semibold">Configuration Source: main.tf</h2>
+                    <span className="text-xs text-[#525252]">HCL2 Syntax</span>
+                  </div>
+                  <pre className="bg-[#161616] text-[#f4f4f4] p-4 text-xs font-mono overflow-x-auto leading-relaxed">
+{`terraform {
+  required_version = ">= 1.8.0"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.40"
+    }
+  }
+}
+
+resource "aws_ecs_service" "payments_backend" {
+  name            = "payments-api"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.payments_app.arn
+  desired_count   = 6
+  launch_type     = "FARGATE"
+  
+  load_balancer {
+    target_group_arn = aws_lb_target_group.payments_api.arn
+    container_name   = "payments-container"
+    container_port   = 8080
+  }
+}`}
+                  </pre>
+                </div>
+              )}
+
+              {/* TAB 4: PASSIVE PRODUCT DISCOVERY HUB */}
+              {activeTerraformTab === 'hub' && (
+                <div className="space-y-4">
+                  <div className="bg-white border border-[#e0e0e0] p-5 shadow-sm">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Icons.ConcertLogo />
+                      <h2 className="text-base font-semibold text-[#161616]">IBM Concert Platform Capabilities</h2>
+                    </div>
+                    <p className="text-xs text-[#525252] max-w-2xl leading-relaxed">
+                      Expand your HCP Terraform workflows with adjacent operational capabilities across observability, resource optimization, and security risk management.
+                    </p>
+                  </div>
+
+                  {/* 3 Capabilities Directory Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Observe Card */}
+                    <div className="bg-white border border-[#e0e0e0] p-4 flex flex-col justify-between hover:border-[#0f62fe] transition-all">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5 font-semibold text-xs text-[#161616]">
+                            <Icons.Observe />
+                            <span>Concert Observe</span>
+                          </div>
+                          <AccessStateBadge state={ConcertCapabilities.observe.accessState} />
+                        </div>
+                        <p className="text-xs text-[#525252] leading-relaxed">
+                          {ConcertCapabilities.observe.description}
+                        </p>
+                      </div>
+                      <div className="pt-4 mt-2 border-t border-[#f4f4f4] flex items-center justify-between">
+                        <span className="text-[11px] text-[#525252]">Status: <strong>{capabilityStatuses.observe.status}</strong></span>
+                        <button
+                          onClick={() => openActivationModal(ConcertCapabilities.observe)}
+                          className="px-2.5 py-1 bg-[#0f62fe] hover:bg-[#0353e9] text-white text-xs font-medium"
+                        >
+                          Explore setup →
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Optimize Card */}
+                    <div className="bg-white border border-[#e0e0e0] p-4 flex flex-col justify-between hover:border-[#0f62fe] transition-all">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5 font-semibold text-xs text-[#161616]">
+                            <Icons.Optimize />
+                            <span>Concert Optimize</span>
+                          </div>
+                          <AccessStateBadge state={ConcertCapabilities.optimize.accessState} />
+                        </div>
+                        <p className="text-xs text-[#525252] leading-relaxed">
+                          {ConcertCapabilities.optimize.description}
+                        </p>
+                      </div>
+                      <div className="pt-4 mt-2 border-t border-[#f4f4f4] flex items-center justify-between">
+                        <span className="text-[11px] text-[#525252]">Status: <strong>{capabilityStatuses.optimize.status}</strong></span>
+                        <button
+                          onClick={() => openActivationModal(ConcertCapabilities.optimize)}
+                          className="px-2.5 py-1 bg-[#0f62fe] hover:bg-[#0353e9] text-white text-xs font-medium"
+                        >
+                          Explore setup →
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Protect Card */}
+                    <div className="bg-white border border-[#e0e0e0] p-4 flex flex-col justify-between hover:border-[#0f62fe] transition-all">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5 font-semibold text-xs text-[#161616]">
+                            <Icons.Protect />
+                            <span>Concert Protect</span>
+                          </div>
+                          <AccessStateBadge state={ConcertCapabilities.protect.accessState} />
+                        </div>
+                        <p className="text-xs text-[#525252] leading-relaxed">
+                          {ConcertCapabilities.protect.description}
+                        </p>
+                      </div>
+                      <div className="pt-4 mt-2 border-t border-[#f4f4f4] flex items-center justify-between">
+                        <span className="text-[11px] text-[#525252]">Status: <strong>{capabilityStatuses.protect.status}</strong></span>
+                        <button
+                          onClick={() => openActivationModal(ConcertCapabilities.protect)}
+                          className="px-2.5 py-1 bg-[#0f62fe] hover:bg-[#0353e9] text-white text-xs font-medium"
+                        >
+                          Explore setup →
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </main>
+
+            {/* ========================================================= */}
+            {/* CHANNEL B: IBM SIDEKICK (DEFAULT COLLAPSED)               */}
+            {/* ========================================================= */}
+            <aside className={`bg-white border-l border-[#e0e0e0] transition-all duration-300 flex flex-col z-20 ${
+              sidekickOpen ? 'w-full md:w-80' : 'w-10'
+            }`}>
+              {/* Header */}
+              <div className="bg-[#161616] text-white p-2.5 flex items-center justify-between border-b border-[#393939] h-12">
+                <div className="flex items-center gap-2 overflow-hidden">
+                  <div className="w-5 h-5 rounded bg-[#0f62fe] text-white flex items-center justify-center font-bold text-xs">
+                    ⚡
+                  </div>
+                  {sidekickOpen && (
+                    <span className="text-xs font-semibold truncate text-white">Sidekick Assistant</span>
+                  )}
+                </div>
+                <button
+                  onClick={() => setSidekickOpen(!sidekickOpen)}
+                  className="text-[#c6c6c6] hover:text-white p-1"
+                  title={sidekickOpen ? "Collapse Sidekick" : "Expand Sidekick"}
+                >
+                  {sidekickOpen ? <Icons.Close /> : <Icons.ChevronRight />}
+                </button>
+              </div>
+
+              {/* Collapsed Trigger Entry Point */}
+              {!sidekickOpen && (
+                <div 
+                  onClick={() => setSidekickOpen(true)}
+                  className="flex-1 flex flex-col items-center py-4 cursor-pointer hover:bg-[#f4f4f4] transition-colors"
+                  title="Open Sidekick context panel"
+                >
+                  <span className="text-[11px] text-[#525252] font-semibold [writing-mode:vertical-rl] tracking-wider uppercase">
+                    Sidekick Context
+                  </span>
+                </div>
+              )}
+
+              {/* Expanded Content */}
+              {sidekickOpen && (
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs">
+                  <div className="bg-[#f4f4f4] border border-[#e0e0e0] p-3 space-y-1">
+                    <span className="font-semibold text-[#161616] block">Workspace Context</span>
+                    <p className="text-[#525252] text-[11px]">
+                      Viewing <strong>acme-prod-payments-api</strong> (Run #142 Applied, 24 AWS resources).
+                    </p>
+                  </div>
+
+                  {/* Contextual Single Opportunity (if applicable) */}
+                  {currentCapability ? (
+                    <div className="border border-[#e0e0e0] p-3 bg-white space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-[#161616] flex items-center gap-1">
+                          <currentCapability.icon />
+                          <span>{currentCapability.shortName}</span>
+                        </span>
+                        <AccessStateBadge state={currentCapability.accessState} />
+                      </div>
+                      <p className="text-[#525252] text-[11px] leading-relaxed">
+                        {currentScenario.whyAppears}
+                      </p>
+                      <button
+                        onClick={() => openActivationModal(currentCapability, 'sidekick')}
+                        className="w-full py-1.5 bg-[#0f62fe] hover:bg-[#0353e9] text-white font-medium text-xs mt-1"
+                      >
+                        Explore capability setup →
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="border border-[#e0e0e0] p-3 bg-white text-[#525252] text-[11px]">
+                      Terraform Run #142 is complete. No adjacent expansion actions required for this task.
+                    </div>
+                  )}
+
+                  {/* Standard Terraform Workspace Help Actions */}
+                  <div className="space-y-1.5 pt-2 border-t border-[#e0e0e0]">
+                    <span className="text-[10px] font-bold text-[#8d8d8d] uppercase tracking-wide">Workspace Actions</span>
+                    <button className="w-full text-left p-1.5 hover:bg-[#f4f4f4] text-[#161616] text-[11px] block">
+                      • Download plan JSON output
+                    </button>
+                    <button className="w-full text-left p-1.5 hover:bg-[#f4f4f4] text-[#161616] text-[11px] block">
+                      • Review state lock history
+                    </button>
+                  </div>
+                </div>
+              )}
+            </aside>
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* CHANNEL C: BOB AGENT-FIRST CONVERSATION                   */}
+        {/* ========================================================= */}
+        {activeChannel === 'bob' && (
+          <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+            
+            {/* Left Context Reference Pane */}
+            <div className="w-full md:w-1/3 border-r border-[#e0e0e0] bg-[#f4f4f4] p-5 overflow-y-auto hidden md:block">
+              <div className="bg-white border border-[#e0e0e0] p-4 mb-4">
+                <div className="text-xs text-[#525252] mb-1">Active Terraform Context</div>
+                <h3 className="font-semibold text-sm">acme-prod-payments-api</h3>
+                <div className="text-xs text-[#24a148] font-medium mt-1">✔ Run #142 Applied (24 Resources)</div>
+              </div>
+
+              <div className="bg-white border border-[#e0e0e0] p-4 space-y-2 text-xs">
+                <span className="font-bold text-[#525252] uppercase text-[10px]">Try a Terraform task:</span>
+                <p className="text-[#525252] text-[11px]">
+                  Ask an infrastructure question. Bob uses simulated Terraform context to explain what can be established.
+                </p>
+                <div className="space-y-1.5 pt-2">
+                  <button
+                    onClick={() => handleSendBobQuery('Did my latest deployment affect application performance?')}
+                    className="w-full text-left p-2 bg-[#f4f4f4] hover:bg-[#e0e0e0] border border-[#e0e0e0] text-[#161616] text-[11px]"
+                  >
+                    1. "Did my deployment affect application performance?"
+                  </button>
+                  <button
+                    onClick={() => handleSendBobQuery('Are we overprovisioning our ECS services?')}
+                    className="w-full text-left p-2 bg-[#f4f4f4] hover:bg-[#e0e0e0] border border-[#e0e0e0] text-[#161616] text-[11px]"
+                  >
+                    2. "Are we overprovisioning our ECS services?"
+                  </button>
+                  <button
+                    onClick={() => handleSendBobQuery('Can you check whether the image used by payments-api has vulnerabilities?')}
+                    className="w-full text-left p-2 bg-[#f4f4f4] hover:bg-[#e0e0e0] border border-[#e0e0e0] text-[#161616] text-[11px]"
+                  >
+                    3. "Does the container image have vulnerabilities?"
+                  </button>
+                  <button
+                    onClick={() => handleSendBobQuery('What resources changed in my latest deployment?')}
+                    className="w-full text-left p-2 bg-[#f4f4f4] hover:bg-[#e0e0e0] border border-[#e0e0e0] text-[#161616] text-[11px]"
+                  >
+                    4. "What resources changed in my latest run?"
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Chat Interface */}
+            <div className="flex-1 flex flex-col bg-white overflow-hidden">
+              <div className="bg-[#161616] text-white p-3 flex items-center justify-between border-b border-[#393939]">
+                <div className="flex items-center gap-2">
+                  <Icons.BobBot />
+                  <div>
+                    <span className="text-xs font-semibold block text-white">IBM Bob Assistant</span>
+                    <span className="text-[10px] text-[#c6c6c6] block">HCP Terraform + Concert Context Simulation</span>
+                  </div>
+                </div>
+              </div>
+
+              {presenterMode && (
+                <div className="border-b border-[#e0e0e0] bg-white px-4 py-2 text-[11px] flex flex-wrap items-center gap-3">
+                  <button onClick={() => setEmbeddedAgentConcept(!embeddedAgentConcept)} className="text-[#0f62fe] hover:underline font-medium">
+                    {embeddedAgentConcept ? 'Hide' : 'Show'} advanced in-chat UI concept
+                  </button>
+                  <span className="text-[#525252]">Requires verification of IBM Bob embedded UI support</span>
+                </div>
+              )}
+              {presenterMode && embeddedAgentConcept && (
+                <div className="bg-[#edf5ff] border-b border-[#a6c8ff] px-4 py-3 text-xs space-y-2">
+                  <div className="font-semibold text-[#0043ce]">Advanced concept · Unverified Bob UI extension</div>
+                  <div>A potential inline account check or activation component could live here if Bob supports this interaction. The standard journey uses the external digital link.</div>
+                  <button onClick={() => openActivationModal(currentCapability || ConcertCapabilities.observe, 'bob')} className="text-[#0f62fe] font-medium underline">Use supported link-style handoff instead ↗</button>
+                </div>
+              )}
+              {/* Messages Area */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#f4f4f4]">
+                {bobMessages.map((msg) => (
+                  <div key={msg.id} className={`flex gap-2.5 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    {msg.sender === 'bob' && (
+                      <div className="flex-shrink-0 mt-0.5">
+                        <Icons.BobBot />
+                      </div>
+                    )}
+                    
+                    <div className={`max-w-xl p-3.5 text-xs rounded-none leading-relaxed ${
+                      msg.sender === 'user' 
+                        ? 'bg-[#0f62fe] text-white' 
+                        : 'bg-white text-[#161616] border border-[#e0e0e0] shadow-sm'
+                    }`}>
+                      <div className="flex justify-between items-center mb-1 text-[10px] opacity-75">
+                        <span className="font-semibold">{msg.sender === 'bob' ? 'Bob' : 'You (DevOps Lead)'}</span>
+                        <span>{msg.time}</span>
+                      </div>
+
+                      {/* Tool Execution Log if present */}
+                      {msg.toolUsed && (
+                        <div className="mb-2 p-2 bg-[#f4f4f4] border border-[#e0e0e0] font-mono text-[10px] text-[#525252]">
+                          <div className="text-[#0f62fe]">› Executed: {msg.toolUsed}</div>
+                          <div className="text-[#24a148]">↳ Output: {msg.toolOutput}</div>
+                        </div>
+                      )}
+                      
+                      <div className="whitespace-pre-line space-y-1">
+                        {msg.text}
+                      </div>
+
+                      {/* External digital activation LINK: no unverified native Bob modal */}
+                      {msg.recommendation && (
+                        <div className="mt-3 pt-2.5 border-t border-[#e0e0e0]">
+                          <button
+                            onClick={() => openActivationModal(msg.recommendation, 'bob', msg.customerQuestion)}
+                            className="text-[#0f62fe] hover:underline font-medium text-xs flex items-center gap-1.5"
+                          >
+                            <span>Explore {msg.recommendation.shortName} setup ↗</span>
+                          </button>
+                          <div className="text-[10px] text-[#525252] mt-1.5">Opens IBM digital activation (simulated browser handoff)</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                {isBobTyping && (
+                  <div className="flex items-center gap-2 text-xs text-[#525252] italic p-2">
+                    <Icons.BobBot />
+                    <span>Bob is inspecting Terraform run state...</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Chat Input Box */}
+              <div className="p-3 bg-white border-t border-[#e0e0e0] flex gap-2">
+                <input
+                  type="text"
+                  value={bobInput}
+                  onChange={(e) => setBobInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSendBobQuery()}
+                  placeholder="Ask Bob about your Terraform run, resource sizing, performance or security..."
+                  className="flex-1 px-3 py-2 text-xs border border-[#8d8d8d] focus:border-[#0f62fe] focus:outline-none"
+                />
+                <button
+                  onClick={() => handleSendBobQuery()}
+                  className="px-4 py-2 bg-[#0f62fe] hover:bg-[#0353e9] text-white text-xs font-semibold"
+                >
+                  Send
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ========================================================= */}
+      {/* 4. SHARED IBM DIGITAL ACTIVATION DESTINATION (SIMULATED)   */}
+      {/* Full-screen browser experience, intentionally separate from Bob */}
+      {/* ========================================================= */}
+      {activationModalOpen && (
+        <div data-testid="digital-activation" className="fixed inset-0 z-50 bg-[#f4f4f4] overflow-y-auto text-[#161616]">
+          <header className="bg-[#161616] text-white min-h-14 px-4 md:px-8 py-3 flex flex-wrap gap-3 items-center justify-between border-b border-[#393939]">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-semibold text-[#78a9ff]">IBM</span>
+              <span className="text-[#8d8d8d]">|</span>
+              <span className="text-sm font-medium">Concert · Digital activation</span>
+              <span className="text-[10px] px-2 py-0.5 border border-[#525252] text-[#c6c6c6]">SIMULATED EXPERIENCE</span>
+            </div>
+            <button onClick={returnToOrigin} className="flex items-center gap-2 text-xs text-[#c6c6c6] hover:text-white border border-[#525252] px-3 py-1.5">
+              <Icons.Close /> Return to {activationOrigin === 'bob' ? 'Bob conversation' : activationOrigin === 'sidekick' ? 'Terraform Sidekick' : 'Terraform workspace'}
+            </button>
+          </header>
+          <main className="max-w-4xl mx-auto p-4 md:p-8 space-y-5">
+            <div className="text-xs text-[#525252] flex flex-wrap gap-2 items-center">
+              <span>{activationOrigin === 'bob' ? 'IBM Bob' : activationOrigin === 'hub' ? 'Capabilities hub' : activationOrigin === 'sidekick' ? 'Terraform Sidekick' : 'HCP Terraform'}</span>
+              <span>→</span>
+              <span>IBM Digital Activation</span>
+              <span>→</span>
+              <strong className="text-[#161616]">{activeCapabilityForModal.shortName}</strong>
+            </div>
+            <section className="bg-white border border-[#e0e0e0] p-5 md:p-6 space-y-3">
+              <div className="flex items-center gap-2"><activeCapabilityForModal.icon /><span className="text-[11px] font-medium text-[#525252] uppercase">IBM Concert capability</span></div>
+              <h1 className="text-xl md:text-2xl font-semibold">{activeCapabilityForModal.name}</h1>
+              <p className="text-sm text-[#525252]">{activeCapabilityForModal.tagline}</p>
+              <div className="bg-[#f4f4f4] border border-[#e0e0e0] p-3 text-xs space-y-1">
+                <div className="text-[#525252] font-medium">Your context · ACME Corp / HCP Terraform / acme-prod-payments-api</div>
+                <div className="text-[#161616]">{activationReason}</div>
+                <div className="text-[#525252]">Context is synthetic. Sharing it with IBM sales requires explicit submission consent.</div>
+              </div>
+            </section>
+
+            {activationStage === 'overview' && (
+              <section className="bg-white border border-[#e0e0e0] p-5 md:p-6 space-y-4">
+                <div>
+                  <h2 className="text-base font-semibold">Choose how to explore this capability</h2>
+                  <p className="text-xs text-[#525252] mt-1">Account status is simulated for this leadership demo. A production experience would check entitlements before displaying the appropriate action.</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                  {[
+                    { key:'licensed', title:'Already licensed', description:'Use an existing product tenant and review its connection prerequisites.' },
+                    { key:'trial', title:'Trial eligible', description:'Request a self-service trial and review onboarding requirements.' },
+                    { key:'evaluation', title:'Sales-assisted evaluation', description:'Send a qualified evaluation request to IBM.' }
+                  ].map((item) => (
+                    <button key={item.key} onClick={() => setModalPath(item.key)} aria-pressed={modalPath === item.key}
+                      className={`text-left border p-4 min-h-[118px] space-y-2 hover:border-[#0f62fe] focus:outline-[#0f62fe] ${modalPath === item.key ? 'border-[#0f62fe] bg-[#edf5ff]' : 'border-[#e0e0e0] bg-white'}`}>
+                      <div className="flex items-center gap-2"><span className={`inline-block w-3 h-3 rounded-full border ${modalPath === item.key ? 'border-[#0f62fe] bg-[#0f62fe]' : 'border-[#8d8d8d]'}`}></span><strong className="text-sm">{item.title}</strong></div>
+                      <p className="text-[#525252] leading-relaxed">{item.description}</p>
+                    </button>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-3 items-center justify-between border-t border-[#e0e0e0] pt-4">
+                  <span className="text-[11px] text-[#525252]">Suggested sample status: {activeCapabilityForModal.accessState}</span>
+                  <button onClick={startSelectedPath} className="bg-[#0f62fe] text-white text-xs font-medium px-5 py-2.5 hover:bg-[#0353e9]">{modalPath === 'evaluation' ? 'Request an evaluation' : modalPath === 'licensed' ? 'Review connection steps' : 'Review trial request'} →</button>
+                </div>
+              </section>
+            )}
+
+            {activationStage === 'evaluation' && (
+              <section className="bg-white border border-[#e0e0e0] p-5 md:p-6 space-y-4">
+                <div className="flex items-center justify-between gap-2"><h2 className="text-base font-semibold">Request an IBM evaluation</h2><span className="text-xs text-[#525252]">Step 1 of 1</span></div>
+                <p className="text-sm text-[#525252]">A sales or technical specialist can help you evaluate {activeCapabilityForModal.shortName}. This demo captures the information a real handoff would include.</p>
+                <div className="bg-[#f4f4f4] p-4 border border-[#e0e0e0] grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div><div className="text-[#525252]">Organization</div><strong>ACME Corp</strong></div>
+                  <div><div className="text-[#525252]">Existing IBM product</div><strong>HCP Terraform (paid)</strong></div>
+                  <div><div className="text-[#525252]">Product requested</div><strong>{activeCapabilityForModal.shortName}</strong></div>
+                  <div><div className="text-[#525252]">Terraform workspace</div><strong>acme-prod-payments-api</strong></div>
+                  <div className="sm:col-span-2"><div className="text-[#525252]">Reason for evaluation</div><strong>{activationReason}</strong></div>
+                </div>
+                <form onSubmit={submitEvaluationRequest} className="space-y-4" noValidate>
+                  <div className="max-w-lg space-y-1"><label htmlFor="evaluation-email" className="text-xs font-medium block">Work email <span className="text-[#da1e28]">*</span></label><input id="evaluation-email" type="email" value={evaluationEmail} onChange={e=>setEvaluationEmail(e.target.value)} placeholder="you@company.com" required className="w-full p-2.5 text-sm border border-[#8d8d8d] focus:outline-[#0f62fe] bg-white" /></div>
+                  <div className="max-w-lg space-y-1"><label htmlFor="evaluation-next-step" className="text-xs font-medium block">Preferred next step</label><select id="evaluation-next-step" value={evaluationNextStep} onChange={e=>setEvaluationNextStep(e.target.value)} className="w-full p-2.5 text-sm border border-[#8d8d8d] bg-white"><option value="specialist">Speak to a product specialist</option><option value="technical">Request a technical evaluation</option></select></div>
+                  <div className="space-y-1"><label htmlFor="evaluation-message" className="text-xs font-medium block">Additional context (optional)</label><textarea id="evaluation-message" value={evaluationMessage} onChange={e=>setEvaluationMessage(e.target.value)} rows="3" placeholder="What would you like to evaluate?" className="w-full p-2.5 text-sm border border-[#8d8d8d] focus:outline-[#0f62fe] bg-white"></textarea></div>
+                  <label className="flex items-start gap-2 text-xs text-[#525252] cursor-pointer"><input type="checkbox" checked={evaluationConsent} onChange={e=>setEvaluationConsent(e.target.checked)} className="mt-0.5" /><span>I agree to share these account, workspace and contact details with IBM for this evaluation request. <strong>In this prototype, no data is sent.</strong></span></label>
+                  {evaluationError && <div role="alert" className="text-xs text-[#da1e28] border-l-2 border-[#da1e28] pl-3">{evaluationError}</div>}
+                  <div className="flex flex-wrap gap-3 justify-between items-center border-t border-[#e0e0e0] pt-4"><button type="button" onClick={()=>setActivationStage('overview')} className="text-xs px-4 py-2 border border-[#8d8d8d] hover:bg-[#f4f4f4]">Back</button><button disabled={requestSubmitting} type="submit" className="text-xs px-5 py-2.5 bg-[#0f62fe] text-white font-medium disabled:opacity-50">{requestSubmitting ? 'Submitting simulated request…' : 'Submit evaluation request'} →</button></div>
+                </form>
+              </section>
+            )}
+
+            {activationStage === 'submitted' && currentRequest && (
+              <section className="bg-white border border-[#e0e0e0] p-6 space-y-4" data-testid="evaluation-confirmation">
+                <div className="flex items-center gap-2 text-[#0e6027]"><Icons.Checkmark /><h2 className="text-lg font-semibold">Evaluation request submitted</h2></div>
+                <p className="text-sm">IBM would review your request and contact you to arrange the appropriate evaluation. <strong>This is a simulation; nothing has been sent.</strong></p>
+                <div className="border border-[#e0e0e0] bg-[#f4f4f4] p-4 text-xs grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div><div className="text-[#525252]">Demo reference</div><strong>{currentRequest.reference}</strong></div>
+                  <div><div className="text-[#525252]">Status</div><strong>Evaluation requested · Awaiting IBM follow-up</strong></div>
+                  <div><div className="text-[#525252]">Capability</div><strong>{currentRequest.product}</strong></div>
+                  <div><div className="text-[#525252]">Contact</div><strong>{currentRequest.email}</strong></div>
+                  <div><div className="text-[#525252]">Preferred next step</div><strong>{currentRequest.nextStep === 'technical' ? 'Technical evaluation' : 'Talk to product specialist'}</strong></div>
+                  <div className="sm:col-span-2"><div className="text-[#525252]">Customer request</div><strong>{currentRequest.reason}</strong></div>
+                </div>
+                <button onClick={returnToOrigin} className="bg-[#0f62fe] text-white text-xs font-medium px-5 py-2.5">Return to {activationOrigin === 'bob' ? 'Bob conversation' : 'Terraform workspace'} →</button>
+                {presenterMode && <button onClick={()=>{setModalPath('licensed');setActivationStage('setup');}} className="block text-xs text-[#0f62fe] underline">Presenter only: illustrate post-approval connection steps</button>}
+              </section>
+            )}
+
+            {activationStage === 'setup' && (
+              <section className="bg-white border border-[#e0e0e0] p-5 md:p-6 space-y-4">
+                <h2 className="text-base font-semibold">{modalPath === 'trial' ? 'Request an eligible trial' : 'Connect your existing license'}</h2>
+                <p className="text-sm text-[#525252]">{modalPath === 'trial' ? 'A real deployment would check your entitlement and request an IBM trial tenant. Here you can simulate the request and see the next steps.' : 'Confirm existing product access, then follow the product-specific steps to establish a connection. Actual setup requires permissions and an available tenant.'}</p>
+                <div className="border border-[#e0e0e0] p-4 space-y-3 text-xs">
+                  <div className="font-semibold">{activeCapabilityForModal.shortName} · Product-specific prerequisites</div>
+                  {activeCapabilityForModal.id === 'observe' && <ul className="list-disc pl-5 text-[#525252] space-y-1"><li>Obtain Instana tenant access and appropriate permissions.</li><li>Instrument supported applications and deploy Instana agents using approved methods.</li><li>Validate telemetry, traces and service discovery.</li></ul>}
+                  {activeCapabilityForModal.id === 'optimize' && <ul className="list-disc pl-5 text-[#525252] space-y-1"><li>Obtain Turbonomic account access and supported target configuration.</li><li>Connect relevant workload platforms and utilization data sources.</li><li>Review generated optimization insights when data is available.</li></ul>}
+                  {activeCapabilityForModal.id === 'protect' && <ul className="list-disc pl-5 text-[#525252] space-y-1"><li>Obtain Concert Platform access with adequate permissions.</li><li>Connect supported vulnerability and container-image data sources.</li><li>Review security posture after ingestion and analysis complete.</li></ul>}
+                </div>
+                {modalPath === 'trial' && <label className="flex items-start gap-2 text-xs text-[#525252] cursor-pointer"><input type="checkbox" checked={activationConsent} onChange={e=>setActivationConsent(e.target.checked)}/><span>I want to request a trial of {activeCapabilityForModal.shortName} and understand that this demonstration does not provision a tenant.</span></label>}
+                <div className="flex flex-wrap gap-3 justify-between items-center border-t border-[#e0e0e0] pt-4"><button onClick={()=>setActivationStage('overview')} className="text-xs px-4 py-2 border border-[#8d8d8d]">Back</button><button onClick={completeDigitalSetup} disabled={modalPath==='trial' && !activationConsent} className="bg-[#0f62fe] text-white text-xs px-5 py-2.5 font-medium disabled:opacity-40">{modalPath==='trial'?'Simulate trial request':'Save connection intent'} →</button></div>
+              </section>
+            )}
+
+            {activationStage === 'progress' && (
+              <section className="bg-white border border-[#e0e0e0] p-5 md:p-6 space-y-4">
+                <h2 className="text-base font-semibold">{modalPath === 'trial' ? 'Trial request recorded' : 'Connection preparation recorded'}</h2>
+                <p className="text-sm text-[#525252]">No license has been activated, no product tenant has been provisioned and no telemetry is flowing. This is a simulated onboarding milestone.</p>
+                <div className="border border-[#e0e0e0] divide-y divide-[#e0e0e0] text-xs">
+                  {activeCapabilityForModal.checklist.map((item,i)=><div key={item.id} className="p-3 flex items-center justify-between gap-3"><span>{item.label}</span><span className="text-[#525252] font-medium">{modalPath==='trial' ? 'Pending trial access' : i===0 ? 'Requires verification' : 'Not started'}</span></div>)}
+                </div>
+                <div className="text-xs text-[#525252]">Status: {capabilityStatuses[activeCapabilityForModal.id].status}</div>
+                <button onClick={returnToOrigin} className="bg-[#0f62fe] text-white text-xs px-5 py-2.5 font-medium">Return to {activationOrigin === 'bob' ? 'Bob conversation' : 'Terraform workspace'} →</button>
+              </section>
+            )}
+          </main>
+        </div>
+      )}
+
+    </div>
+  );
+}
+
+// Render root
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+  </script>
+</body>
+</html>
